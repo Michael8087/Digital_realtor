@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Digitální makléř</title>
+<title>Digital Agent</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -43,6 +43,13 @@ header .sub{font-size:.72rem;color:#bcd0c4;letter-spacing:.08em;text-transform:u
   box-shadow:0 0 0 0 rgba(231,111,81,0);
 }
 #micState.on{background:#e76f51;animation:pulse 1.6s infinite}
+.headerRight{display:flex;align-items:center;gap:12px}
+.langSwitch{display:flex;border:1px solid rgba(245,242,234,.35);border-radius:8px;overflow:hidden}
+.langSwitch button{
+  background:none;border:none;color:#bcd0c4;font-family:'Inter',sans-serif;
+  font-weight:600;font-size:.72rem;letter-spacing:.05em;padding:5px 9px;cursor:pointer;
+}
+.langSwitch button.active{background:var(--brass);color:#1f4436}
 @keyframes pulse{
   0%{box-shadow:0 0 0 0 rgba(231,111,81,.5)}
   70%{box-shadow:0 0 0 12px rgba(231,111,81,0)}
@@ -131,63 +138,163 @@ details.transWrap summary{
 <body>
 <header>
   <div>
-    <h1>Digitální makléř</h1>
-    <div class="sub">Váš tichý parťák u prohlídky</div>
+    <h1 data-i18n="title">Digital Agent</h1>
+    <div class="sub" data-i18n="subtitle">Your silent partner during viewings</div>
   </div>
-  <div id="micState" aria-label="Stav mikrofonu"></div>
+  <div class="headerRight">
+    <div class="langSwitch">
+      <button id="langEn" class="active" onclick="setLang('en')">EN</button>
+      <button id="langCs" onclick="setLang('cs')">CZ</button>
+    </div>
+    <div id="micState" aria-label="Microphone status"></div>
+  </div>
 </header>
 <main>
 
 <div class="field">
-  <label for="fBasics">Základní informace o nemovitosti</label>
-  <textarea id="fBasics" placeholder="Např.: Rodinný dům 5+1, 180 m², pozemek 900 m², Ostrava-Poruba, postaven 1998, rekonstrukce střechy 2021, plynový kotel + krb, garáž pro 2 auta, cena 8,9 mil. Kč…"></textarea>
+  <label for="fBasics" data-i18n="basicsLabel">Basic property information</label>
+  <textarea id="fBasics" data-i18n-placeholder="basicsPlaceholder" placeholder="E.g.: 5-bedroom house, 180 m², 900 m² lot, Ostrava-Poruba, built 1998, roof renovated 2021, gas boiler + fireplace, garage for 2 cars, price €360,000…"></textarea>
 </div>
-<button class="btn" id="btnGenerate" onclick="generateKB()">✨ Vygenerovat podklady</button>
+<button class="btn" id="btnGenerate" onclick="generateKB()">✨ Generate materials</button>
 
 <div class="field" style="margin-top:18px">
-  <label for="fStrengths">Silné stránky</label>
-  <textarea id="fStrengths" placeholder="Vygeneruje AI na základě základních informací…"></textarea>
+  <label for="fStrengths" data-i18n="strengthsLabel">Strengths</label>
+  <textarea id="fStrengths" data-i18n-placeholder="genPlaceholder" placeholder="AI will generate this from the basic information…"></textarea>
 </div>
 <div class="field">
-  <label for="fWeaknesses">Slabiny a jak na ně reagovat</label>
-  <textarea id="fWeaknesses" placeholder="Vygeneruje AI na základě základních informací…"></textarea>
-  <div class="hint">Formát „slabina → protiargument" pomůže AI navrhovat pohotové reakce na námitky.</div>
+  <label for="fWeaknesses" data-i18n="weaknessesLabel">Weaknesses and how to respond</label>
+  <textarea id="fWeaknesses" data-i18n-placeholder="genPlaceholder" placeholder="AI will generate this from the basic information…"></textarea>
+  <div class="hint" data-i18n="weaknessesHint">The format "weakness → counter-argument" helps the AI suggest quick responses to objections.</div>
 </div>
 <div class="field">
-  <label for="fFaq">Časté otázky a odpovědi</label>
-  <textarea id="fFaq" placeholder="Vygeneruje AI na základě základních informací…"></textarea>
+  <label for="fFaq" data-i18n="faqLabel">Frequently asked questions and answers</label>
+  <textarea id="fFaq" data-i18n-placeholder="genPlaceholder" placeholder="AI will generate this from the basic information…"></textarea>
 </div>
 <div class="field">
-  <label for="fStrategy">Vyjednávací strategie (soukromé)</label>
-  <textarea id="fStrategy" placeholder="Vygeneruje AI na základě základních informací…"></textarea>
-  <div class="hint">Tyto informace AI použije jen pro vás — nikdy je nenavrhne říct nahlas.</div>
+  <label for="fStrategy" data-i18n="strategyLabel">Negotiation strategy (private)</label>
+  <textarea id="fStrategy" data-i18n-placeholder="genPlaceholder" placeholder="AI will generate this from the basic information…"></textarea>
+  <div class="hint" data-i18n="strategyHint">The AI uses this information only for you — it will never suggest saying it out loud.</div>
 </div>
-<button class="btn secondary" onclick="saveKB()">Uložit</button>
-<span class="savedNote" id="savedNote">Uloženo ✓</span>
+<button class="btn secondary" onclick="saveKB()" data-i18n="save">Save</button>
+<span class="savedNote" id="savedNote" data-i18n="saved">Saved ✓</span>
 
 <hr class="divider">
 
 <div class="liveControls">
-  <button id="btnListen" class="btn big" onclick="toggleListening()">🎙️ Zahájit poslech</button>
+  <button id="btnListen" class="btn big" onclick="toggleListening()">🎙️ Start listening</button>
 </div>
 <div id="status"></div>
 <div id="suggestions">
   <div class="empty">
     <span class="bigIcon">🏡</span>
-    Nejdřív vyplňte základní informace a vygenerujte podklady výše.<br>
-    Pak spusťte poslech — během prohlídky vám sem budou přicházet návrhy, co říct.
+    <span data-i18n="emptyLine1">First fill in the basic information and generate the materials above.</span><br>
+    <span data-i18n="emptyLine2">Then start listening — during the viewing you'll get suggestions here on what to say.</span>
   </div>
 </div>
 <div class="liveControls">
-  <button id="btnAdvise" class="btn secondary big" onclick="requestAdvice(true)">💡 Poraď mi teď</button>
+  <button id="btnAdvise" class="btn secondary big" onclick="requestAdvice(true)">💡 Advise me now</button>
 </div>
 <details class="transWrap">
-  <summary>Přepis konverzace</summary>
-  <div class="transcriptBox" id="transcript"><span class="interim">Zatím žádný přepis…</span></div>
+  <summary data-i18n="transcriptSummary">Conversation transcript</summary>
+  <div class="transcriptBox" id="transcript"><span class="interim" data-i18n="noTranscript">No transcript yet…</span></div>
 </details>
 
 </main>
 <script>
+/* ================= I18N ================= */
+const I18N = {
+  en:{
+    title:'Digital Agent', subtitle:'Your silent partner during viewings',
+    basicsLabel:'Basic property information',
+    basicsPlaceholder:'E.g.: 5-bedroom house, 180 m², 900 m² lot, Ostrava-Poruba, built 1998, roof renovated 2021, gas boiler + fireplace, garage for 2 cars, price €360,000…',
+    generate:'✨ Generate materials', generating:'Generating…',
+    strengthsLabel:'Strengths',
+    weaknessesLabel:'Weaknesses and how to respond',
+    weaknessesHint:'The format "weakness → counter-argument" helps the AI suggest quick responses to objections.',
+    faqLabel:'Frequently asked questions and answers',
+    strategyLabel:'Negotiation strategy (private)',
+    strategyHint:'The AI uses this information only for you — it will never suggest saying it out loud.',
+    genPlaceholder:'AI will generate this from the basic information…',
+    save:'Save', saved:'Saved ✓',
+    startListening:'🎙️ Start listening', stopListening:'⏹ Stop listening',
+    emptyLine1:'First fill in the basic information and generate the materials above.',
+    emptyLine2:"Then start listening — during the viewing you'll get suggestions here on what to say.",
+    advise:'💡 Advise me now', thinking:'Thinking…',
+    transcriptSummary:'Conversation transcript', noTranscript:'No transcript yet…',
+    errFillBasics:'First describe the property in the "Basic property information" field.',
+    errGenerate:'Failed to generate the materials. Please try again.',
+    errSave:'Saving failed, please try again.',
+    errFillAndGenerate:'First fill in the basic information and generate the materials.',
+    errNoSpeech:'This browser does not support speech recognition. Use Chrome or Safari.',
+    errMicDenied:'Microphone access was denied. Allow it in your browser settings.',
+    errAdvice:'Failed to get advice. Please try again in a moment.',
+    listening:'Listening… suggestions will appear automatically.',
+    stopped:'Listening stopped.',
+    tagStrength:'Strength', tagObjection:'Objection response', tagInfo:'Tip'
+  },
+  cs:{
+    title:'Digitální makléř', subtitle:'Váš tichý parťák u prohlídky',
+    basicsLabel:'Základní informace o nemovitosti',
+    basicsPlaceholder:'Např.: Rodinný dům 5+1, 180 m², pozemek 900 m², Ostrava-Poruba, postaven 1998, rekonstrukce střechy 2021, plynový kotel + krb, garáž pro 2 auta, cena 8,9 mil. Kč…',
+    generate:'✨ Vygenerovat podklady', generating:'Generuji…',
+    strengthsLabel:'Silné stránky',
+    weaknessesLabel:'Slabiny a jak na ně reagovat',
+    weaknessesHint:'Formát „slabina → protiargument" pomůže AI navrhovat pohotové reakce na námitky.',
+    faqLabel:'Časté otázky a odpovědi',
+    strategyLabel:'Vyjednávací strategie (soukromé)',
+    strategyHint:'Tyto informace AI použije jen pro vás — nikdy je nenavrhne říct nahlas.',
+    genPlaceholder:'Vygeneruje AI na základě základních informací…',
+    save:'Uložit', saved:'Uloženo ✓',
+    startListening:'🎙️ Zahájit poslech', stopListening:'⏹ Ukončit poslech',
+    emptyLine1:'Nejdřív vyplňte základní informace a vygenerujte podklady výše.',
+    emptyLine2:'Pak spusťte poslech — během prohlídky vám sem budou přicházet návrhy, co říct.',
+    advise:'💡 Poraď mi teď', thinking:'Přemýšlím…',
+    transcriptSummary:'Přepis konverzace', noTranscript:'Zatím žádný přepis…',
+    errFillBasics:'Nejdřív popište nemovitost do pole „Základní informace o nemovitosti".',
+    errGenerate:'Nepodařilo se vygenerovat podklady. Zkuste to znovu.',
+    errSave:'Uložení se nepodařilo, zkuste to znovu.',
+    errFillAndGenerate:'Nejdřív vyplňte základní informace a vygenerujte podklady.',
+    errNoSpeech:'Tento prohlížeč nepodporuje rozpoznávání řeči. Použijte Chrome nebo Safari.',
+    errMicDenied:'Přístup k mikrofonu byl zamítnut. Povolte ho v nastavení prohlížeče.',
+    errAdvice:'Nepodařilo se získat radu. Zkuste to za chvíli znovu.',
+    listening:'Poslouchám… návrhy se objeví automaticky.',
+    stopped:'Poslech ukončen.',
+    tagStrength:'Přednost', tagObjection:'Reakce na námitku', tagInfo:'Tip'
+  }
+};
+let lang = 'en';
+
+function setLang(l){
+  lang = l;
+  if(recognition){ try{recognition.stop();}catch(e){} recognition = null; }
+  applyLang();
+}
+function applyLang(){
+  const t = I18N[lang];
+  document.documentElement.lang = lang;
+  document.title = t.title;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key = el.getAttribute('data-i18n');
+    if(t[key] !== undefined) el.textContent = t[key];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+    const key = el.getAttribute('data-i18n-placeholder');
+    if(t[key] !== undefined) el.placeholder = t[key];
+  });
+  document.getElementById('langEn').classList.toggle('active', lang==='en');
+  document.getElementById('langCs').classList.toggle('active', lang==='cs');
+  const bg=document.getElementById('btnGenerate');
+  if(!bg.disabled) bg.textContent = t.generate;
+  const ba=document.getElementById('btnAdvise');
+  if(!ba.disabled) ba.textContent = t.advise;
+  updateListenButton();
+}
+function updateListenButton(){
+  const b=document.getElementById('btnListen');
+  b.textContent = listening ? I18N[lang].stopListening : I18N[lang].startListening;
+  b.classList.toggle('stop', listening);
+}
+
 /* ================= STATE ================= */
 let kb = {basics:'',strengths:'',weaknesses:'',faq:'',strategy:''};
 let recognition = null;
@@ -223,33 +330,38 @@ async function saveKB(){
     const n=document.getElementById('savedNote');
     n.classList.add('show'); setTimeout(()=>n.classList.remove('show'),1800);
   }catch(e){
-    setStatus('Uložení se nepodařilo, zkuste to znovu.', true);
+    setStatus(I18N[lang].errSave, true);
   }
 }
 function kbFilled(){ return (kb.basics+kb.strengths+kb.weaknesses+kb.faq).trim().length > 20; }
 
 /* ================= AI GENERATE KB ================= */
+const GEN_SYS = {
+  en:`You are an experienced real estate agent and analyst. Based on the basic property information the seller gives you, prepare materials for presenting the property to prospective buyers. Write in English, concisely and practically.
+
+Respond with ONLY a valid JSON object, no markdown, no comments, in exactly this shape:
+{"strengths":"property strengths, one per line","weaknesses":"likely weaknesses in the format 'weakness → counter-argument', one per line","faq":"likely questions from prospective buyers in the format 'question → answer', one per line","strategy":"a brief negotiation strategy and minimum acceptable price/terms based on the info given, 3-5 sentences"}`,
+  cs:`Jsi zkušený realitní makléř a analytik. Na základě základních informací o nemovitosti, které ti dá prodávající, mu připrav podklady pro prezentaci zájemcům. Piš česky, věcně a prakticky.
+
+Odpověz POUZE validním JSON objektem, bez markdownu a bez komentářů, přesně v tomto tvaru:
+{"strengths":"silné stránky nemovitosti, každá na nový řádek","weaknesses":"pravděpodobné slabiny ve formátu 'slabina → protiargument', každá na nový řádek","faq":"pravděpodobné časté otázky zájemců ve formátu 'otázka → odpověď', každá na nový řádek","strategy":"stručný návrh vyjednávací strategie a minimální akceptovatelné ceny/podmínek na základě uvedených informací, 3-5 vět"}`
+};
 async function generateKB(){
   const basics = document.getElementById('fBasics').value.trim();
   if(basics.length < 10){
-    setStatus('Nejdřív popište nemovitost do pole „Základní informace o nemovitosti".', true);
+    setStatus(I18N[lang].errFillBasics, true);
     document.getElementById('fBasics').focus();
     return;
   }
   const btn = document.getElementById('btnGenerate');
   const orig = btn.innerHTML;
-  btn.innerHTML = '<span class="spinner"></span> Generuji…'; btn.disabled = true;
-
-  const sys = `Jsi zkušený realitní makléř a analytik. Na základě základních informací o nemovitosti, které ti dá prodávající, mu připrav podklady pro prezentaci zájemcům. Piš česky, věcně a prakticky.
-
-Odpověz POUZE validním JSON objektem, bez markdownu a bez komentářů, přesně v tomto tvaru:
-{"strengths":"silné stránky nemovitosti, každá na nový řádek","weaknesses":"pravděpodobné slabiny ve formátu 'slabina → protiargument', každá na nový řádek","faq":"pravděpodobné časté otázky zájemců ve formátu 'otázka → odpověď', každá na nový řádek","strategy":"stručný návrh vyjednávací strategie a minimální akceptovatelné ceny/podmínek na základě uvedených informací, 3-5 vět"}`;
+  btn.innerHTML = '<span class="spinner"></span> '+I18N[lang].generating; btn.disabled = true;
 
   try{
     const res = await fetch('/api/advice',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ system: sys, messages:[{role:'user',content:basics}] })
+      body:JSON.stringify({ system: GEN_SYS[lang], messages:[{role:'user',content:basics}] })
     });
     const data = await res.json();
     const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
@@ -261,7 +373,7 @@ Odpověz POUZE validním JSON objektem, bez markdownu a bez komentářů, přesn
     document.getElementById('fStrategy').value = obj.strategy||'';
     await saveKB();
   }catch(e){
-    setStatus('Nepodařilo se vygenerovat podklady. Zkuste to znovu.', true);
+    setStatus(I18N[lang].errGenerate, true);
   }finally{
     btn.innerHTML = orig; btn.disabled = false;
   }
@@ -277,7 +389,7 @@ function initRecognition(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SR){ return null; }
   const rec = new SR();
-  rec.lang = 'cs-CZ';
+  rec.lang = lang==='cs' ? 'cs-CZ' : 'en-US';
   rec.continuous = true;
   rec.interimResults = true;
   rec.onresult = (e)=>{
@@ -291,7 +403,7 @@ function initRecognition(){
   };
   rec.onerror = (e)=>{
     if(e.error==='not-allowed'){
-      setStatus('Přístup k mikrofonu byl zamítnut. Povolte ho v nastavení prohlížeče.', true);
+      setStatus(I18N[lang].errMicDenied, true);
       stopListening();
     }
   };
@@ -309,22 +421,21 @@ function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>
 function toggleListening(){ listening ? stopListening() : startListening(); }
 function startListening(){
   if(!kbFilled()){
-    setStatus('Nejdřív vyplňte základní informace a vygenerujte podklady.', true);
+    setStatus(I18N[lang].errFillAndGenerate, true);
     document.getElementById('fBasics').scrollIntoView({behavior:'smooth',block:'center'});
     document.getElementById('fBasics').focus();
     return;
   }
   if(!recognition) recognition = initRecognition();
   if(!recognition){
-    setStatus('Tento prohlížeč nepodporuje rozpoznávání řeči. Použijte Chrome nebo Safari.', true);
+    setStatus(I18N[lang].errNoSpeech, true);
     return;
   }
   try{ recognition.start(); }catch(e){}
   listening = true;
   document.getElementById('micState').classList.add('on');
-  const b=document.getElementById('btnListen');
-  b.textContent='⏹ Ukončit poslech'; b.classList.add('stop');
-  setStatus('Poslouchám… návrhy se objeví automaticky.');
+  updateListenButton();
+  setStatus(I18N[lang].listening);
   adviceTimer = setInterval(()=>{
     if(finalTranscript.length - lastAdvisedLen > 120){ requestAdvice(false); }
   }, 12000);
@@ -334,29 +445,13 @@ function stopListening(){
   if(recognition){ try{recognition.stop();}catch(e){} }
   if(adviceTimer){ clearInterval(adviceTimer); adviceTimer=null; }
   document.getElementById('micState').classList.remove('on');
-  const b=document.getElementById('btnListen');
-  b.textContent='🎙️ Zahájit poslech'; b.classList.remove('stop');
-  setStatus('Poslech ukončen.');
+  updateListenButton();
+  setStatus(I18N[lang].stopped);
 }
 
 /* ================= AI ADVICE ================= */
-async function requestAdvice(manual){
-  if(advising) return;
-  if(!kbFilled()){
-    setStatus('Nejdřív vyplňte základní informace a vygenerujte podklady.', true);
-    document.getElementById('fBasics').scrollIntoView({behavior:'smooth',block:'center'});
-    document.getElementById('fBasics').focus();
-    return;
-  }
-  advising = true;
-  const btn=document.getElementById('btnAdvise');
-  const orig=btn.innerHTML;
-  btn.innerHTML='<span class="spinner"></span> Přemýšlím…'; btn.disabled=true;
-
-  const convo = finalTranscript.slice(-1800).trim();
-  const recent = shownSuggestions.slice(-6).map(s=>'- '+s).join('\n');
-
-  const sys = `Jsi zkušený realitní makléř a diskrétní kouč prodávajícího. Prodávající má v uchu/na displeji tvoje rady během prohlídky domu se zájemci. Mluv česky, stručně a prakticky.
+function adviceSys(recent){
+  if(lang==='cs') return `Jsi zkušený realitní makléř a diskrétní kouč prodávajícího. Prodávající má v uchu/na displeji tvoje rady během prohlídky domu se zájemci. Mluv česky, stručně a prakticky.
 
 ZNALOSTNÍ BÁZE O DOMĚ:
 Základní informace: ${kb.basics}
@@ -369,20 +464,55 @@ Odpověz POUZE validním JSON polem 1–3 návrhů, bez markdownu, bez komentá�
 [{"type":"strength"|"objection"|"info","title":"krátký titulek (max 6 slov)","text":"co konkrétně říct nebo udělat, 1–3 věty, přirozený mluvený jazyk"}]
 
 Typy: "strength" = připomeň přednost relevantní k situaci, "objection" = reakce na námitku/pochybnost zájemce, "info" = odpověď na otázku či taktická rada.
-Nenavrhuj nic z tohoto, co už bylo navrženo: 
+Nenavrhuj nic z tohoto, co už bylo navrženo:
 ${recent||'(nic)'}`;
+  return `You are an experienced real estate agent and a discreet coach for the seller. The seller has your advice on their screen during a house viewing with prospective buyers. Speak English, briefly and practically.
 
-  const user = convo
+PROPERTY KNOWLEDGE BASE:
+Basic info: ${kb.basics}
+Strengths: ${kb.strengths}
+Weaknesses and counter-arguments: ${kb.weaknesses}
+FAQ: ${kb.faq}
+PRIVATE seller negotiation strategy (NEVER suggest saying this out loud, use it only for tactics): ${kb.strategy}
+
+Respond with ONLY a valid JSON array of 1–3 suggestions, no markdown, no comments:
+[{"type":"strength"|"objection"|"info","title":"short title (max 6 words)","text":"what exactly to say or do, 1-3 sentences, natural spoken language"}]
+
+Types: "strength" = remind of a relevant strength, "objection" = response to a buyer's objection/doubt, "info" = answer to a question or tactical advice.
+Do not suggest anything from this list that was already suggested:
+${recent||'(none)'}`;
+}
+function adviceUser(convo, manual){
+  if(lang==='cs') return convo
     ? `Přepis poslední části konverzace se zájemci (může obsahovat chyby rozpoznávání řeči):\n"""${convo}"""\n\n${manual?'Prodávající právě stiskl tlačítko „Poraď mi teď" — dej nejrelevantnější radu k aktuální situaci.':'Navrhni, co teď říct, jen pokud je to k situaci relevantní.'}`
     : 'Konverzace ještě nezačala nebo nebyl zachycen přepis. Navrhni 2–3 silné úvodní talking points pro začátek prohlídky.';
+  return convo
+    ? `Transcript of the recent part of the conversation with prospective buyers (may contain speech-recognition errors):\n"""${convo}"""\n\n${manual?'The seller just pressed the "Advise me now" button — give the most relevant advice for the current situation.':'Suggest what to say now, only if relevant to the situation.'}`
+    : "The conversation has not started yet or no transcript was captured. Suggest 2-3 strong opening talking points for starting the viewing.";
+}
+async function requestAdvice(manual){
+  if(advising) return;
+  if(!kbFilled()){
+    setStatus(I18N[lang].errFillAndGenerate, true);
+    document.getElementById('fBasics').scrollIntoView({behavior:'smooth',block:'center'});
+    document.getElementById('fBasics').focus();
+    return;
+  }
+  advising = true;
+  const btn=document.getElementById('btnAdvise');
+  const orig=btn.innerHTML;
+  btn.innerHTML='<span class="spinner"></span> '+I18N[lang].thinking; btn.disabled=true;
+
+  const convo = finalTranscript.slice(-1800).trim();
+  const recent = shownSuggestions.slice(-6).map(s=>'- '+s).join('\n');
 
   try{
     const res = await fetch('/api/advice',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        system:sys,
-        messages:[{role:'user',content:user}]
+        system:adviceSys(recent),
+        messages:[{role:'user',content:adviceUser(convo, manual)}]
       })
     });
     const data = await res.json();
@@ -395,7 +525,7 @@ ${recent||'(nic)'}`;
       if(manual) setStatus('');
     }
   }catch(e){
-    if(manual) setStatus('Nepodařilo se získat radu. Zkuste to za chvíli znovu.', true);
+    if(manual) setStatus(I18N[lang].errAdvice, true);
   }finally{
     advising=false;
     btn.innerHTML=orig; btn.disabled=false;
@@ -412,7 +542,8 @@ function renderSuggestions(arr){
     const div=document.createElement('div');
     const type = ['strength','objection','info'].includes(s.type)?s.type:'info';
     div.className='sug '+type;
-    const tag = type==='strength'?'Přednost':type==='objection'?'Reakce na námitku':'Tip';
+    const t=I18N[lang];
+    const tag = type==='strength'?t.tagStrength:type==='objection'?t.tagObjection:t.tagInfo;
     div.innerHTML='<span class="tag">'+tag+'</span><h3>'+escapeHtml(s.title||'')+'</h3><p>'+escapeHtml(s.text)+'</p>';
     wrap.prepend(div);
   });
@@ -421,6 +552,7 @@ function renderSuggestions(arr){
 }
 
 /* ================= INIT ================= */
+applyLang();
 loadKB();
 </script>
 </body>
