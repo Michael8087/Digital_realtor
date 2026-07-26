@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Digitální makléř</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2321;
+  --paper:#f2f0eb;
+  --card:#ffffff;
+  --pine:#2e5d4b;
+  --pine-deep:#1f4436;
+  --brass:#b8862b;
+  --clay:#a4442e;
+  --mist:#dfe3dd;
+  --muted:#6b7570;
+  --radius:14px;
+  --shadow:0 2px 10px rgba(28,35,33,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  display:flex;flex-direction:column;
+  -webkit-font-smoothing:antialiased;
+}
+header{
+  background:var(--pine-deep);
+  color:#f5f2ea;
+  padding:14px 18px 12px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+header h1{font-family:'Fraunces',serif;font-weight:650;font-size:1.25rem;letter-spacing:.2px}
+header .sub{font-size:.72rem;color:#bcd0c4;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+#micState{
+  width:12px;height:12px;border-radius:50%;
+  background:#5c6d64;transition:background .3s;
+  box-shadow:0 0 0 0 rgba(231,111,81,0);
+}
+#micState.on{background:#e76f51;animation:pulse 1.6s infinite}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(231,111,81,.5)}
+  70%{box-shadow:0 0 0 12px rgba(231,111,81,0)}
+  100%{box-shadow:0 0 0 0 rgba(231,111,81,0)}
+}
+nav{
+  display:flex;background:var(--pine-deep);
+  padding:0 10px;gap:4px;
+}
+nav button{
+  flex:1;background:none;border:none;color:#a8bfb2;
+  font-family:'Inter',sans-serif;font-weight:600;font-size:.85rem;
+  padding:11px 4px;border-bottom:3px solid transparent;cursor:pointer;
+}
+nav button.active{color:#fff;border-bottom-color:var(--brass)}
+main{flex:1;overflow-y:auto;padding:16px;max-width:760px;width:100%;margin:0 auto}
+.tab{display:none}
+.tab.active{display:block}
+
+/* ---- Setup ---- */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:.78rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.field textarea,.field input{
+  width:100%;border:1px solid var(--mist);border-radius:10px;
+  padding:11px 12px;font-family:'Inter',sans-serif;font-size:.95rem;
+  background:var(--card);color:var(--ink);resize:vertical;
+}
+.field textarea{min-height:86px}
+.field textarea:focus,.field input:focus{outline:2px solid var(--pine);outline-offset:1px}
+.hint{font-size:.78rem;color:var(--muted);margin-top:4px;line-height:1.4}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--pine);color:#fff;border:none;border-radius:10px;
+  padding:12px 20px;font-family:'Inter',sans-serif;font-weight:600;font-size:.95rem;
+  cursor:pointer;transition:background .15s;
+}
+.btn:hover{background:var(--pine-deep)}
+.btn.secondary{background:transparent;color:var(--pine);border:1.5px solid var(--pine)}
+.btn.big{width:100%;justify-content:center;padding:16px;font-size:1.05rem}
+.btn.stop{background:var(--clay)}
+.btn:disabled{opacity:.5;cursor:default}
+.savedNote{font-size:.85rem;color:var(--pine);font-weight:600;margin-left:12px;opacity:0;transition:opacity .3s}
+.savedNote.show{opacity:1}
+
+/* ---- Live ---- */
+.liveControls{display:flex;gap:10px;margin-bottom:14px}
+.liveControls .btn{flex:1;justify-content:center}
+#suggestions{display:flex;flex-direction:column;gap:12px;margin-bottom:18px}
+.sug{
+  background:var(--card);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:14px 16px 15px;
+  border-left:5px solid var(--pine);
+  animation:slideIn .35s ease;
+}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.sug.objection{border-left-color:var(--clay)}
+.sug.strength{border-left-color:var(--brass)}
+.sug .tag{
+  display:inline-block;font-size:.68rem;font-weight:700;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:5px;
+}
+.sug.objection .tag{color:var(--clay)}
+.sug.strength .tag{color:var(--brass)}
+.sug h3{font-family:'Fraunces',serif;font-weight:650;font-size:1.05rem;margin-bottom:5px}
+.sug p{font-size:.95rem;line-height:1.5}
+.empty{
+  text-align:center;color:var(--muted);padding:36px 20px;
+  font-size:.92rem;line-height:1.6;
+}
+.empty .bigIcon{font-size:2rem;display:block;margin-bottom:8px}
+#status{
+  font-size:.8rem;color:var(--muted);text-align:center;margin-bottom:12px;
+  min-height:1.2em;
+}
+#status.err{color:var(--clay);font-weight:600}
+.transcriptBox{
+  background:var(--card);border:1px solid var(--mist);border-radius:var(--radius);
+  padding:12px 14px;max-height:160px;overflow-y:auto;
+  font-size:.88rem;line-height:1.55;color:var(--ink);
+}
+.transcriptBox .interim{color:var(--muted);font-style:italic}
+details.transWrap{margin-top:4px}
+details.transWrap summary{
+  font-size:.8rem;font-weight:600;color:var(--muted);cursor:pointer;
+  padding:6px 0;letter-spacing:.05em;text-transform:uppercase;
+}
+.spinner{
+  display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);
+  border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Digitální makléř</h1>
+    <div class="sub">Váš tichý parťák u prohlídky</div>
+  </div>
+  <div id="micState" aria-label="Stav mikrofonu"></div>
+</header>
+<nav>
+  <button id="navLive" class="active" onclick="showTab('live')">Prohlídka</button>
+  <button id="navSetup" onclick="showTab('setup')">O domě</button>
+</nav>
+<main>
+
+<!-- ============ LIVE TAB ============ -->
+<section id="tab-live" class="tab active">
+  <div class="liveControls">
+    <button id="btnListen" class="btn big" onclick="toggleListening()">🎙️ Zahájit poslech</button>
+  </div>
+  <div class="liveControls">
+    <button id="btnAdvise" class="btn secondary big" onclick="requestAdvice(true)">💡 Poraď mi teď</button>
+  </div>
+  <div id="status"></div>
+  <div id="suggestions">
+    <div class="empty">
+      <span class="bigIcon">🏡</span>
+      Nejdřív vyplňte záložku <strong>O domě</strong>.<br>
+      Pak spusťte poslech — během prohlídky vám sem budou přicházet návrhy, co říct.
+    </div>
+  </div>
+  <details class="transWrap">
+    <summary>Přepis konverzace</summary>
+    <div class="transcriptBox" id="transcript"><span class="interim">Zatím žádný přepis…</span></div>
+  </details>
+</section>
+
+<!-- ============ SETUP TAB ============ -->
+<section id="tab-setup" class="tab">
+  <div class="field">
+    <label for="fBasics">Základní informace</label>
+    <textarea id="fBasics" placeholder="Např.: Rodinný dům 5+1, 180 m², pozemek 900 m², Ostrava-Poruba, postaven 1998, rekonstrukce střechy 2021, plynový kotel + krb, garáž pro 2 auta, cena 8,9 mil. Kč…"></textarea>
+  </div>
+  <div class="field">
+    <label for="fStrengths">Silné stránky</label>
+    <textarea id="fStrengths" placeholder="Např.: klidná slepá ulice, škola 5 min pěšky, nová okna s trojskly, jižní orientace zahrady, nízké náklady na vytápění (18 tis./rok)…"></textarea>
+  </div>
+  <div class="field">
+    <label for="fWeaknesses">Slabiny a jak na ně reagovat</label>
+    <textarea id="fWeaknesses" placeholder="Např.: Starší koupelna → cena to zohledňuje, rozpočet na rekonstrukci cca 250 tis. | Blízko hlavní silnice → nová protihluková okna, uvnitř je klid…"></textarea>
+    <div class="hint">Formát „slabina → protiargument" pomůže AI navrhovat pohotové reakce na námitky.</div>
+  </div>
+  <div class="field">
+    <label for="fFaq">Časté otázky a odpovědi</label>
+    <textarea id="fFaq" placeholder="Např.: Proč prodáváte? → Stěhujeme se za prací. | Kdy se lze nastěhovat? → Do 2 měsíců od podpisu. | Jsou v ceně spotřebiče? → Ano, kuchyně vč. spotřebičů…"></textarea>
+  </div>
+  <div class="field">
+    <label for="fStrategy">Vyjednávací strategie (soukromé)</label>
+    <textarea id="fStrategy" placeholder="Např.: minimální akceptovatelná cena 8,4 mil., preferuji rychlý prodej, hotovost výhodou, nábytek můžu nechat jako bonus při plné ceně…"></textarea>
+    <div class="hint">Tyto informace AI použije jen pro vás — nikdy je nenavrhne říct nahlas.</div>
+  </div>
+  <button class="btn" onclick="saveKB()">Uložit</button>
+  <span class="savedNote" id="savedNote">Uloženo ✓</span>
+</section>
+
+</main>
+<script>
+/* ================= STATE ================= */
+let kb = {basics:'',strengths:'',weaknesses:'',faq:'',strategy:''};
+let recognition = null;
+let listening = false;
+let finalTranscript = '';
+let lastAdvisedLen = 0;
+let advising = false;
+let adviceTimer = null;
+const shownSuggestions = []; // keep last few to avoid repeats
+
+/* ================= TABS ================= */
+function showTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.getElementById('navLive').classList.toggle('active',name==='live');
+  document.getElementById('navSetup').classList.toggle('active',name==='setup');
+}
+
+/* ================= STORAGE ================= */
+async function loadKB(){
+  try{
+    const r = await window.storage.get('house-kb');
+    if(r && r.value){ kb = JSON.parse(r.value); }
+  }catch(e){ /* not saved yet */ }
+  document.getElementById('fBasics').value = kb.basics||'';
+  document.getElementById('fStrengths').value = kb.strengths||'';
+  document.getElementById('fWeaknesses').value = kb.weaknesses||'';
+  document.getElementById('fFaq').value = kb.faq||'';
+  document.getElementById('fStrategy').value = kb.strategy||'';
+}
+async function saveKB(){
+  kb = {
+    basics:document.getElementById('fBasics').value,
+    strengths:document.getElementById('fStrengths').value,
+    weaknesses:document.getElementById('fWeaknesses').value,
+    faq:document.getElementById('fFaq').value,
+    strategy:document.getElementById('fStrategy').value
+  };
+  try{
+    await window.storage.set('house-kb', JSON.stringify(kb));
+    const n=document.getElementById('savedNote');
+    n.classList.add('show'); setTimeout(()=>n.classList.remove('show'),1800);
+  }catch(e){
+    setStatus('Uložení se nepodařilo, zkuste to znovu.', true);
+  }
+}
+function kbFilled(){ return (kb.basics+kb.strengths+kb.weaknesses+kb.faq).trim().length > 20; }
+
+/* ================= SPEECH ================= */
+function setStatus(msg, err){
+  const s=document.getElementById('status');
+  s.textContent=msg||''; s.className = err ? 'err' : '';
+  s.id='status';
+}
+function initRecognition(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ return null; }
+  const rec = new SR();
+  rec.lang = 'cs-CZ';
+  rec.continuous = true;
+  rec.interimResults = true;
+  rec.onresult = (e)=>{
+    let interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const t = e.results[i][0].transcript;
+      if(e.results[i].isFinal){ finalTranscript += t + ' '; }
+      else{ interim += t; }
+    }
+    renderTranscript(interim);
+  };
+  rec.onerror = (e)=>{
+    if(e.error==='not-allowed'){
+      setStatus('Přístup k mikrofonu byl zamítnut. Povolte ho v nastavení prohlížeče.', true);
+      stopListening();
+    }
+  };
+  rec.onend = ()=>{ if(listening){ try{rec.start();}catch(e){} } };
+  return rec;
+}
+function renderTranscript(interim){
+  const box=document.getElementById('transcript');
+  const tail = finalTranscript.slice(-2000);
+  box.innerHTML = escapeHtml(tail) + (interim?'<span class="interim"> '+escapeHtml(interim)+'</span>':'');
+  box.scrollTop = box.scrollHeight;
+}
+function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function toggleListening(){ listening ? stopListening() : startListening(); }
+function startListening(){
+  if(!kbFilled()){
+    setStatus('Nejdřív vyplňte a uložte informace v záložce „O domě".', true);
+    showTab('setup');
+    return;
+  }
+  if(!recognition) recognition = initRecognition();
+  if(!recognition){
+    setStatus('Tento prohlížeč nepodporuje rozpoznávání řeči. Použijte Chrome nebo Safari.', true);
+    return;
+  }
+  try{ recognition.start(); }catch(e){}
+  listening = true;
+  document.getElementById('micState').classList.add('on');
+  const b=document.getElementById('btnListen');
+  b.textContent='⏹ Ukončit poslech'; b.classList.add('stop');
+  setStatus('Poslouchám… návrhy se objeví automaticky.');
+  adviceTimer = setInterval(()=>{
+    if(finalTranscript.length - lastAdvisedLen > 120){ requestAdvice(false); }
+  }, 12000);
+}
+function stopListening(){
+  listening=false;
+  if(recognition){ try{recognition.stop();}catch(e){} }
+  if(adviceTimer){ clearInterval(adviceTimer); adviceTimer=null; }
+  document.getElementById('micState').classList.remove('on');
+  const b=document.getElementById('btnListen');
+  b.textContent='🎙️ Zahájit poslech'; b.classList.remove('stop');
+  setStatus('Poslech ukončen.');
+}
+
+/* ================= AI ADVICE ================= */
+async function requestAdvice(manual){
+  if(advising) return;
+  if(!kbFilled()){
+    setStatus('Nejdřív vyplňte a uložte informace v záložce „O domě".', true);
+    showTab('setup');
+    return;
+  }
+  advising = true;
+  const btn=document.getElementById('btnAdvise');
+  const orig=btn.innerHTML;
+  btn.innerHTML='<span class="spinner"></span> Přemýšlím…'; btn.disabled=true;
+
+  const convo = finalTranscript.slice(-1800).trim();
+  const recent = shownSuggestions.slice(-6).map(s=>'- '+s).join('\n');
+
+  const sys = `Jsi zkušený realitní makléř a diskrétní kouč prodávajícího. Prodávající má v uchu/na displeji tvoje rady během prohlídky domu se zájemci. Mluv česky, stručně a prakticky.
+
+ZNALOSTNÍ BÁZE O DOMĚ:
+Základní informace: ${kb.basics}
+Silné stránky: ${kb.strengths}
+Slabiny a protiargumenty: ${kb.weaknesses}
+Časté otázky: ${kb.faq}
+SOUKROMÁ strategie prodávajícího (NIKDY nenavrhuj tyto informace vyslovit nahlas, používej je jen pro taktiku): ${kb.strategy}
+
+Odpověz POUZE validním JSON polem 1–3 návrhů, bez markdownu, bez komentářů:
+[{"type":"strength"|"objection"|"info","title":"krátký titulek (max 6 slov)","text":"co konkrétně říct nebo udělat, 1–3 věty, přirozený mluvený jazyk"}]
+
+Typy: "strength" = připomeň přednost relevantní k situaci, "objection" = reakce na námitku/pochybnost zájemce, "info" = odpověď na otázku či taktická rada.
+Nenavrhuj nic z tohoto, co už bylo navrženo: 
+${recent||'(nic)'}`;
+
+  const user = convo
+    ? `Přepis poslední části konverzace se zájemci (může obsahovat chyby rozpoznávání řeči):\n"""${convo}"""\n\n${manual?'Prodávající právě stiskl tlačítko „Poraď mi teď" — dej nejrelevantnější radu k aktuální situaci.':'Navrhni, co teď říct, jen pokud je to k situaci relevantní.'}`
+    : 'Konverzace ještě nezačala nebo nebyl zachycen přepis. Navrhni 2–3 silné úvodní talking points pro začátek prohlídky.';
+
+  try{
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1000,
+        system:sys,
+        messages:[{role:'user',content:user}]
+      })
+    });
+    const data = await res.json();
+    const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
+    const clean = text.replace(/```json|```/g,'').trim();
+    const arr = JSON.parse(clean);
+    if(Array.isArray(arr) && arr.length){
+      renderSuggestions(arr);
+      lastAdvisedLen = finalTranscript.length;
+      if(manual) setStatus('');
+    }
+  }catch(e){
+    if(manual) setStatus('Nepodařilo se získat radu. Zkuste to za chvíli znovu.', true);
+  }finally{
+    advising=false;
+    btn.innerHTML=orig; btn.disabled=false;
+  }
+}
+
+function renderSuggestions(arr){
+  const wrap=document.getElementById('suggestions');
+  const emptyEl = wrap.querySelector('.empty');
+  if(emptyEl) emptyEl.remove();
+  arr.forEach(s=>{
+    if(!s || !s.text) return;
+    shownSuggestions.push(s.title||s.text.slice(0,60));
+    const div=document.createElement('div');
+    const type = ['strength','objection','info'].includes(s.type)?s.type:'info';
+    div.className='sug '+type;
+    const tag = type==='strength'?'Přednost':type==='objection'?'Reakce na námitku':'Tip';
+    div.innerHTML='<span class="tag">'+tag+'</span><h3>'+escapeHtml(s.title||'')+'</h3><p>'+escapeHtml(s.text)+'</p>';
+    wrap.prepend(div);
+  });
+  // keep max 12 cards
+  while(wrap.children.length>12) wrap.removeChild(wrap.lastChild);
+}
+
+/* ================= INIT ================= */
+loadKB();
+</script>
+</body>
+</html>
