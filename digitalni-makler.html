@@ -361,12 +361,10 @@ ${recent||'(nic)'}`;
     : 'Konverzace ještě nezačala nebo nebyl zachycen přepis. Navrhni 2–3 silné úvodní talking points pro začátek prohlídky.';
 
   try{
-    const res = await fetch('https://api.anthropic.com/v1/messages',{
+    const res = await fetch('/api/advice',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-6',
-        max_tokens:1000,
         system:sys,
         messages:[{role:'user',content:user}]
       })
