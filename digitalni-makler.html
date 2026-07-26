@@ -48,19 +48,8 @@ header .sub{font-size:.72rem;color:#bcd0c4;letter-spacing:.08em;text-transform:u
   70%{box-shadow:0 0 0 12px rgba(231,111,81,0)}
   100%{box-shadow:0 0 0 0 rgba(231,111,81,0)}
 }
-nav{
-  display:flex;background:var(--pine-deep);
-  padding:0 10px;gap:4px;
-}
-nav button{
-  flex:1;background:none;border:none;color:#a8bfb2;
-  font-family:'Inter',sans-serif;font-weight:600;font-size:.85rem;
-  padding:11px 4px;border-bottom:3px solid transparent;cursor:pointer;
-}
-nav button.active{color:#fff;border-bottom-color:var(--brass)}
 main{flex:1;overflow-y:auto;padding:16px;max-width:760px;width:100%;margin:0 auto}
-.tab{display:none}
-.tab.active{display:block}
+.divider{border:none;border-top:1px solid var(--mist);margin:22px 0}
 
 /* ---- Setup ---- */
 .field{margin-bottom:14px}
@@ -147,61 +136,55 @@ details.transWrap summary{
   </div>
   <div id="micState" aria-label="Stav mikrofonu"></div>
 </header>
-<nav>
-  <button id="navLive" class="active" onclick="showTab('live')">Prohlídka</button>
-  <button id="navSetup" onclick="showTab('setup')">O domě</button>
-</nav>
 <main>
 
-<!-- ============ LIVE TAB ============ -->
-<section id="tab-live" class="tab active">
-  <div class="liveControls">
-    <button id="btnListen" class="btn big" onclick="toggleListening()">🎙️ Zahájit poslech</button>
-  </div>
-  <div class="liveControls">
-    <button id="btnAdvise" class="btn secondary big" onclick="requestAdvice(true)">💡 Poraď mi teď</button>
-  </div>
-  <div id="status"></div>
-  <div id="suggestions">
-    <div class="empty">
-      <span class="bigIcon">🏡</span>
-      Nejdřív vyplňte záložku <strong>O domě</strong>.<br>
-      Pak spusťte poslech — během prohlídky vám sem budou přicházet návrhy, co říct.
-    </div>
-  </div>
-  <details class="transWrap">
-    <summary>Přepis konverzace</summary>
-    <div class="transcriptBox" id="transcript"><span class="interim">Zatím žádný přepis…</span></div>
-  </details>
-</section>
+<div class="field">
+  <label for="fBasics">Základní informace o nemovitosti</label>
+  <textarea id="fBasics" placeholder="Např.: Rodinný dům 5+1, 180 m², pozemek 900 m², Ostrava-Poruba, postaven 1998, rekonstrukce střechy 2021, plynový kotel + krb, garáž pro 2 auta, cena 8,9 mil. Kč…"></textarea>
+</div>
+<button class="btn" id="btnGenerate" onclick="generateKB()">✨ Vygenerovat podklady</button>
 
-<!-- ============ SETUP TAB ============ -->
-<section id="tab-setup" class="tab">
-  <div class="field">
-    <label for="fBasics">Základní informace</label>
-    <textarea id="fBasics" placeholder="Např.: Rodinný dům 5+1, 180 m², pozemek 900 m², Ostrava-Poruba, postaven 1998, rekonstrukce střechy 2021, plynový kotel + krb, garáž pro 2 auta, cena 8,9 mil. Kč…"></textarea>
+<div class="field" style="margin-top:18px">
+  <label for="fStrengths">Silné stránky</label>
+  <textarea id="fStrengths" placeholder="Vygeneruje AI na základě základních informací…"></textarea>
+</div>
+<div class="field">
+  <label for="fWeaknesses">Slabiny a jak na ně reagovat</label>
+  <textarea id="fWeaknesses" placeholder="Vygeneruje AI na základě základních informací…"></textarea>
+  <div class="hint">Formát „slabina → protiargument" pomůže AI navrhovat pohotové reakce na námitky.</div>
+</div>
+<div class="field">
+  <label for="fFaq">Časté otázky a odpovědi</label>
+  <textarea id="fFaq" placeholder="Vygeneruje AI na základě základních informací…"></textarea>
+</div>
+<div class="field">
+  <label for="fStrategy">Vyjednávací strategie (soukromé)</label>
+  <textarea id="fStrategy" placeholder="Vygeneruje AI na základě základních informací…"></textarea>
+  <div class="hint">Tyto informace AI použije jen pro vás — nikdy je nenavrhne říct nahlas.</div>
+</div>
+<button class="btn secondary" onclick="saveKB()">Uložit</button>
+<span class="savedNote" id="savedNote">Uloženo ✓</span>
+
+<hr class="divider">
+
+<div class="liveControls">
+  <button id="btnListen" class="btn big" onclick="toggleListening()">🎙️ Zahájit poslech</button>
+</div>
+<div id="status"></div>
+<div id="suggestions">
+  <div class="empty">
+    <span class="bigIcon">🏡</span>
+    Nejdřív vyplňte základní informace a vygenerujte podklady výše.<br>
+    Pak spusťte poslech — během prohlídky vám sem budou přicházet návrhy, co říct.
   </div>
-  <div class="field">
-    <label for="fStrengths">Silné stránky</label>
-    <textarea id="fStrengths" placeholder="Např.: klidná slepá ulice, škola 5 min pěšky, nová okna s trojskly, jižní orientace zahrady, nízké náklady na vytápění (18 tis./rok)…"></textarea>
-  </div>
-  <div class="field">
-    <label for="fWeaknesses">Slabiny a jak na ně reagovat</label>
-    <textarea id="fWeaknesses" placeholder="Např.: Starší koupelna → cena to zohledňuje, rozpočet na rekonstrukci cca 250 tis. | Blízko hlavní silnice → nová protihluková okna, uvnitř je klid…"></textarea>
-    <div class="hint">Formát „slabina → protiargument" pomůže AI navrhovat pohotové reakce na námitky.</div>
-  </div>
-  <div class="field">
-    <label for="fFaq">Časté otázky a odpovědi</label>
-    <textarea id="fFaq" placeholder="Např.: Proč prodáváte? → Stěhujeme se za prací. | Kdy se lze nastěhovat? → Do 2 měsíců od podpisu. | Jsou v ceně spotřebiče? → Ano, kuchyně vč. spotřebičů…"></textarea>
-  </div>
-  <div class="field">
-    <label for="fStrategy">Vyjednávací strategie (soukromé)</label>
-    <textarea id="fStrategy" placeholder="Např.: minimální akceptovatelná cena 8,4 mil., preferuji rychlý prodej, hotovost výhodou, nábytek můžu nechat jako bonus při plné ceně…"></textarea>
-    <div class="hint">Tyto informace AI použije jen pro vás — nikdy je nenavrhne říct nahlas.</div>
-  </div>
-  <button class="btn" onclick="saveKB()">Uložit</button>
-  <span class="savedNote" id="savedNote">Uloženo ✓</span>
-</section>
+</div>
+<div class="liveControls">
+  <button id="btnAdvise" class="btn secondary big" onclick="requestAdvice(true)">💡 Poraď mi teď</button>
+</div>
+<details class="transWrap">
+  <summary>Přepis konverzace</summary>
+  <div class="transcriptBox" id="transcript"><span class="interim">Zatím žádný přepis…</span></div>
+</details>
 
 </main>
 <script>
@@ -214,14 +197,6 @@ let lastAdvisedLen = 0;
 let advising = false;
 let adviceTimer = null;
 const shownSuggestions = []; // keep last few to avoid repeats
-
-/* ================= TABS ================= */
-function showTab(name){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('tab-'+name).classList.add('active');
-  document.getElementById('navLive').classList.toggle('active',name==='live');
-  document.getElementById('navSetup').classList.toggle('active',name==='setup');
-}
 
 /* ================= STORAGE ================= */
 async function loadKB(){
@@ -252,6 +227,45 @@ async function saveKB(){
   }
 }
 function kbFilled(){ return (kb.basics+kb.strengths+kb.weaknesses+kb.faq).trim().length > 20; }
+
+/* ================= AI GENERATE KB ================= */
+async function generateKB(){
+  const basics = document.getElementById('fBasics').value.trim();
+  if(basics.length < 10){
+    setStatus('Nejdřív popište nemovitost do pole „Základní informace o nemovitosti".', true);
+    document.getElementById('fBasics').focus();
+    return;
+  }
+  const btn = document.getElementById('btnGenerate');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner"></span> Generuji…'; btn.disabled = true;
+
+  const sys = `Jsi zkušený realitní makléř a analytik. Na základě základních informací o nemovitosti, které ti dá prodávající, mu připrav podklady pro prezentaci zájemcům. Piš česky, věcně a prakticky.
+
+Odpověz POUZE validním JSON objektem, bez markdownu a bez komentářů, přesně v tomto tvaru:
+{"strengths":"silné stránky nemovitosti, každá na nový řádek","weaknesses":"pravděpodobné slabiny ve formátu 'slabina → protiargument', každá na nový řádek","faq":"pravděpodobné časté otázky zájemců ve formátu 'otázka → odpověď', každá na nový řádek","strategy":"stručný návrh vyjednávací strategie a minimální akceptovatelné ceny/podmínek na základě uvedených informací, 3-5 vět"}`;
+
+  try{
+    const res = await fetch('/api/advice',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ system: sys, messages:[{role:'user',content:basics}] })
+    });
+    const data = await res.json();
+    const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
+    const clean = text.replace(/```json|```/g,'').trim();
+    const obj = JSON.parse(clean);
+    document.getElementById('fStrengths').value = obj.strengths||'';
+    document.getElementById('fWeaknesses').value = obj.weaknesses||'';
+    document.getElementById('fFaq').value = obj.faq||'';
+    document.getElementById('fStrategy').value = obj.strategy||'';
+    await saveKB();
+  }catch(e){
+    setStatus('Nepodařilo se vygenerovat podklady. Zkuste to znovu.', true);
+  }finally{
+    btn.innerHTML = orig; btn.disabled = false;
+  }
+}
 
 /* ================= SPEECH ================= */
 function setStatus(msg, err){
@@ -295,8 +309,9 @@ function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>
 function toggleListening(){ listening ? stopListening() : startListening(); }
 function startListening(){
   if(!kbFilled()){
-    setStatus('Nejdřív vyplňte a uložte informace v záložce „O domě".', true);
-    showTab('setup');
+    setStatus('Nejdřív vyplňte základní informace a vygenerujte podklady.', true);
+    document.getElementById('fBasics').scrollIntoView({behavior:'smooth',block:'center'});
+    document.getElementById('fBasics').focus();
     return;
   }
   if(!recognition) recognition = initRecognition();
@@ -328,8 +343,9 @@ function stopListening(){
 async function requestAdvice(manual){
   if(advising) return;
   if(!kbFilled()){
-    setStatus('Nejdřív vyplňte a uložte informace v záložce „O domě".', true);
-    showTab('setup');
+    setStatus('Nejdřív vyplňte základní informace a vygenerujte podklady.', true);
+    document.getElementById('fBasics').scrollIntoView({behavior:'smooth',block:'center'});
+    document.getElementById('fBasics').focus();
     return;
   }
   advising = true;
