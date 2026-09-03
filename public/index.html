@@ -313,8 +313,8 @@ const shownSuggestions = []; // keep last few to avoid repeats
 /* ================= STORAGE ================= */
 async function loadKB(){
   try{
-    const r = await window.storage.get('house-kb');
-    if(r && r.value){ kb = JSON.parse(r.value); }
+    const raw = window.localStorage.getItem('house-kb');
+    if(raw){ kb = JSON.parse(raw); }
   }catch(e){ /* not saved yet */ }
   document.getElementById('fBasics').value = kb.basics||'';
   document.getElementById('fStrengths').value = kb.strengths||'';
@@ -331,7 +331,7 @@ async function saveKB(){
     strategy:document.getElementById('fStrategy').value
   };
   try{
-    await window.storage.set('house-kb', JSON.stringify(kb));
+    window.localStorage.setItem('house-kb', JSON.stringify(kb));
     const n=document.getElementById('savedNote');
     n.classList.add('show'); setTimeout(()=>n.classList.remove('show'),1800);
   }catch(e){
