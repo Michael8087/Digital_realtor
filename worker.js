@@ -41,7 +41,12 @@ export default {
             },
             body: JSON.stringify({
               model: "claude-sonnet-4-6",
-              max_tokens: 1000,
+              // 1000 was too tight — a property with multiple units/rooms
+              // pushes the JSON response past it, Anthropic truncates
+              // mid-object (stop_reason: "max_tokens"), and the frontend's
+              // JSON.parse throws on the incomplete result. 4096 comfortably
+              // covers even multi-unit properties with room to spare.
+              max_tokens: 4096,
               system,
               messages
             })
