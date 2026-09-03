@@ -1,0 +1,22 @@
+{
+  "name": "digital_realtor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "worker.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Michael8087/Digital_realtor.git"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Michael8087/Digital_realtor/issues"
+  },
+  "homepage": "https://github.com/Michael8087/Digital_realtor#readme",
+  "devDependencies": {
+    "wrangler": "^4.128.0"
+  }
+}
