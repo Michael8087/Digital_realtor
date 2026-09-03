@@ -22,23 +22,37 @@ export default {
         return Response.json({ error: "Missing system or messages" }, { status: 400 });
       }
 
+      // Anthropic occasionally returns transient errors (429 rate limit,
+      // 5xx/529 overloaded) that clear up within a second or two — retry a
+      // couple of times with a short backoff before giving up, instead of
+      // surfacing the first hiccup straight to the user.
+      const RETRYABLE = new Set([429, 500, 502, 503, 529]);
+      const MAX_ATTEMPTS = 3;
+      let anthropicRes;
+      let data;
       try {
-        const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": env.ANTHROPIC_API_KEY,
-            "anthropic-version": "2023-06-01"
-          },
-          body: JSON.stringify({
-            model: "claude-sonnet-4-6",
-            max_tokens: 1000,
-            system,
-            messages
-          })
-        });
+        for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+          anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": env.ANTHROPIC_API_KEY,
+              "anthropic-version": "2023-06-01"
+            },
+            body: JSON.stringify({
+              model: "claude-sonnet-4-6",
+              max_tokens: 1000,
+              system,
+              messages
+            })
+          });
 
-        const data = await anthropicRes.json();
+          if (anthropicRes.ok || !RETRYABLE.has(anthropicRes.status) || attempt === MAX_ATTEMPTS) {
+            data = await anthropicRes.json();
+            break;
+          }
+          await new Promise((r) => setTimeout(r, 500 * attempt));
+        }
         return Response.json(data, { status: anthropicRes.status });
       } catch {
         return Response.json({ error: "Upstream request failed" }, { status: 500 });
